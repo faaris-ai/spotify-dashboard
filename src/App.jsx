@@ -1,9 +1,15 @@
 import { useState } from 'react';
 import FileUpload from './components/FileUpload';
+import Sidebar from './components/Sidebar';
+import HeroSection from './components/HeroSection';
 import StatsCard from './components/StatsCard';
 import PatternCharts from './components/PatternCharts';
+import ListeningHeatmap from './components/ListeningHeatmap';
 import TopItemsTable from './components/TopItemsTable';
 import SimilarityPanel from './components/SimilarityPanel';
+import TimelineCharts from './components/TimelineCharts';
+import BehaviorCharts from './components/BehaviorCharts';
+import DeepDiveCharts from './components/DeepDiveCharts';
 import { processSpotifyData, getStats } from './utils/dataProcessing';
 import './App.css';
 
@@ -42,132 +48,194 @@ function App() {
   const hasComparison = dataset1 && dataset2;
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>Spotify Listening Dashboard</h1>
-        <p>Upload Spotify Extended Streaming History JSON files to visualize and compare</p>
-      </header>
-
-      <div className="upload-section">
-        <FileUpload
-          onDataLoaded={handleData1Loaded}
-          datasetLabel="Dataset 1"
-        />
-        <FileUpload
-          onDataLoaded={handleData2Loaded}
-          datasetLabel="Dataset 2 (optional)"
-        />
-        {hasData && (
-          <button className="clear-btn" onClick={clearData}>
-            Clear All
-          </button>
-        )}
-      </div>
-
+    <div className={`app ${hasData ? 'with-sidebar' : ''}`}>
       {hasData && (
-        <>
-          <nav className="tabs">
-            <button
-              className={activeTab === 'overview' ? 'active' : ''}
-              onClick={() => setActiveTab('overview')}
-            >
-              Overview
-            </button>
-            <button
-              className={activeTab === 'patterns' ? 'active' : ''}
-              onClick={() => setActiveTab('patterns')}
-            >
-              Patterns
-            </button>
-            <button
-              className={activeTab === 'top' ? 'active' : ''}
-              onClick={() => setActiveTab('top')}
-            >
-              Top Items
-            </button>
-            {hasComparison && (
-              <button
-                className={activeTab === 'similarity' ? 'active' : ''}
-                onClick={() => setActiveTab('similarity')}
-              >
-                Similarity
-              </button>
-            )}
-          </nav>
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          hasComparison={hasComparison}
+          hasData={hasData}
+        />
+      )}
 
-          <main className="main-content">
-            {activeTab === 'overview' && (
-              <div className="overview-tab">
-                <div className="stats-row">
-                  {stats1 && (
-                    <StatsCard stats={stats1} label={label1} color={P1_COLOR} />
-                  )}
-                  {stats2 && (
-                    <StatsCard stats={stats2} label={label2} color={P2_COLOR} />
+      <div className="app-main">
+        {!hasData && (
+          <>
+            <header className="header">
+              <div className="header-icon">🎧</div>
+              <h1>Spotify Listening Dashboard</h1>
+              <p>Upload Spotify Extended Streaming History JSON files to visualize and compare</p>
+            </header>
+
+            <div className="upload-section">
+              <FileUpload
+                onDataLoaded={handleData1Loaded}
+                datasetLabel="Dataset 1"
+              />
+              <FileUpload
+                onDataLoaded={handleData2Loaded}
+                datasetLabel="Dataset 2 (optional)"
+              />
+            </div>
+
+            <div className="empty-state">
+              <div className="empty-icon">📊</div>
+              <h2>No data loaded</h2>
+              <p>Upload a Spotify Extended Streaming History JSON file to get started.</p>
+              <p className="hint">
+                Your JSON should be an array of listening records with fields like
+                <code>ts</code>, <code>ms_played</code>, <code>master_metadata_track_name</code>, etc.
+              </p>
+            </div>
+          </>
+        )}
+
+        {hasData && (
+          <>
+            <header className="header-compact">
+              <div className="upload-controls">
+                <FileUpload
+                  onDataLoaded={handleData1Loaded}
+                  datasetLabel={dataset1 ? label1 : 'Dataset 1'}
+                />
+                <FileUpload
+                  onDataLoaded={handleData2Loaded}
+                  datasetLabel={dataset2 ? label2 : 'Dataset 2 (optional)'}
+                />
+                <button className="clear-btn" onClick={clearData}>
+                  Clear All
+                </button>
+              </div>
+            </header>
+
+            <main className="main-content">
+              {activeTab === 'overview' && (
+                <div className="overview-tab">
+                  {/* Hero Sections */}
+                  <div className="hero-row">
+                    {stats1 && (
+                      <HeroSection
+                        stats={stats1}
+                        data={dataset1}
+                        label={label1}
+                        color={P1_COLOR}
+                      />
+                    )}
+                    {stats2 && (
+                      <HeroSection
+                        stats={stats2}
+                        data={dataset2}
+                        label={label2}
+                        color={P2_COLOR}
+                      />
+                    )}
+                  </div>
+
+                  {/* Detailed Stats */}
+                  <div className="stats-row">
+                    {stats1 && (
+                      <StatsCard stats={stats1} label={label1} color={P1_COLOR} />
+                    )}
+                    {stats2 && (
+                      <StatsCard stats={stats2} label={label2} color={P2_COLOR} />
+                    )}
+                  </div>
+
+                  {hasComparison && (
+                    <SimilarityPanel
+                      data1={dataset1}
+                      data2={dataset2}
+                      label1={label1}
+                      label2={label2}
+                    />
                   )}
                 </div>
-                {hasComparison && (
+              )}
+
+              {activeTab === 'patterns' && (
+                <div className="patterns-tab">
+                  {/* Heatmap first for the "at a glance" view */}
+                  <ListeningHeatmap
+                    data1={dataset1}
+                    data2={dataset2}
+                    label1={label1}
+                    label2={label2}
+                  />
+
+                  {/* Traditional charts below */}
+                  <PatternCharts
+                    data1={dataset1}
+                    data2={dataset2}
+                    label1={label1}
+                    label2={label2}
+                  />
+                </div>
+              )}
+
+              {activeTab === 'top' && (
+                <div className="top-tab">
+                  {dataset1 && (
+                    <TopItemsTable data={dataset1} label={label1} color={P1_COLOR} />
+                  )}
+                  {dataset2 && (
+                    <TopItemsTable data={dataset2} label={label2} color={P2_COLOR} />
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'similarity' && hasComparison && (
+                <div className="similarity-tab">
                   <SimilarityPanel
                     data1={dataset1}
                     data2={dataset2}
                     label1={label1}
                     label2={label2}
                   />
-                )}
-              </div>
-            )}
+                  <ListeningHeatmap
+                    data1={dataset1}
+                    data2={dataset2}
+                    label1={label1}
+                    label2={label2}
+                  />
+                </div>
+              )}
 
-            {activeTab === 'patterns' && (
-              <PatternCharts
-                data1={dataset1}
-                data2={dataset2}
-                label1={label1}
-                label2={label2}
-              />
-            )}
+              {activeTab === 'timeline' && (
+                <div className="timeline-tab">
+                  <TimelineCharts
+                    data1={dataset1}
+                    data2={dataset2}
+                    label1={label1}
+                    label2={label2}
+                  />
+                </div>
+              )}
 
-            {activeTab === 'top' && (
-              <div className="top-tab">
-                {dataset1 && (
-                  <TopItemsTable data={dataset1} label={label1} color={P1_COLOR} />
-                )}
-                {dataset2 && (
-                  <TopItemsTable data={dataset2} label={label2} color={P2_COLOR} />
-                )}
-              </div>
-            )}
+              {activeTab === 'behavior' && (
+                <div className="behavior-tab">
+                  <BehaviorCharts
+                    data1={dataset1}
+                    data2={dataset2}
+                    label1={label1}
+                    label2={label2}
+                  />
+                </div>
+              )}
 
-            {activeTab === 'similarity' && hasComparison && (
-              <div className="similarity-tab">
-                <SimilarityPanel
-                  data1={dataset1}
-                  data2={dataset2}
-                  label1={label1}
-                  label2={label2}
-                />
-                <PatternCharts
-                  data1={dataset1}
-                  data2={dataset2}
-                  label1={label1}
-                  label2={label2}
-                />
-              </div>
-            )}
-          </main>
-        </>
-      )}
-
-      {!hasData && (
-        <div className="empty-state">
-          <div className="empty-icon">🎵</div>
-          <h2>No data loaded</h2>
-          <p>Upload a Spotify Extended Streaming History JSON file to get started.</p>
-          <p className="hint">
-            Your JSON should be an array of listening records with fields like
-            <code>ts</code>, <code>ms_played</code>, <code>master_metadata_track_name</code>, etc.
-          </p>
-        </div>
-      )}
+              {activeTab === 'deepdive' && (
+                <div className="deepdive-tab">
+                  <DeepDiveCharts
+                    data1={dataset1}
+                    data2={dataset2}
+                    label1={label1}
+                    label2={label2}
+                  />
+                </div>
+              )}
+            </main>
+          </>
+        )}
+      </div>
     </div>
   );
 }

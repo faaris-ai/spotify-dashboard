@@ -91,3 +91,32 @@ code {
 @keyframes borderDash {
   to { stroke-dashoffset: -20; }
 }
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px rgba(29, 185, 84, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 0 16px rgba(29, 185, 84, 0.4));
+  }
+}
