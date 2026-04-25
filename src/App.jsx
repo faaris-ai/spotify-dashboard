@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import FileUpload from './components/FileUpload';
 import Sidebar from './components/Sidebar';
 import HeroSection from './components/HeroSection';
@@ -22,6 +22,33 @@ function App() {
   const [label1, setLabel1] = useState('Person 1');
   const [label2, setLabel2] = useState('Person 2');
   const [activeTab, setActiveTab] = useState('overview');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Auto-load pre-bundled datasets on startup
+  useEffect(() => {
+    const loadPreloadedData = async () => {
+      try {
+        const [res1, res2] = await Promise.all([
+          fetch('/data/faaris.json'),
+          fetch('/data/person2.json')
+        ]);
+
+        if (res1.ok && res2.ok) {
+          const [data1, data2] = await Promise.all([res1.json(), res2.json()]);
+          setDataset1(processSpotifyData(data1, 1));
+          setDataset2(processSpotifyData(data2, 2));
+          setLabel1('Faaris');
+          setLabel2('Person 2');
+        }
+      } catch (error) {
+        console.log('No preloaded data found, starting fresh');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadPreloadedData();
+  }, []);
 
   const handleData1Loaded = (rawData, fileName) => {
     const processed = processSpotifyData(rawData, 1);
@@ -46,6 +73,17 @@ function App() {
   const stats2 = dataset2 ? getStats(dataset2) : null;
   const hasData = dataset1 || dataset2;
   const hasComparison = dataset1 && dataset2;
+
+  if (isLoading) {
+    return (
+      <div className="app loading-screen">
+        <div className="loading-content">
+          <div className="loading-icon">🎧</div>
+          <h2>Loading Spotify Data...</h2>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`app ${hasData ? 'with-sidebar' : ''}`}>
